@@ -16,31 +16,30 @@ int prevStepY;
 int imageX;
 int imageY;
 
-int chartRow;
-
 boolean showInputImg;
 
 FileNamer fileNamer;
 
-
-
 void setup() {
-  size(1024, 768, P2D);
+  size(885, 830, P2D);
   smooth();
 
   margin = 15;
 
   nextPaletteIndex = 0;
   paletteFilenames = new ArrayList<String>();
+  paletteFilenames.add("flake01.png");
   paletteFilenames.add("blobby.png");
   paletteFilenames.add("stripey.png");
   loadNextPalette();
 
-  showInputImg = true;
+  showInputImg = false;
 
   fileNamer = new FileNamer("output/export", "png");
 
-  inputImg = createGraphics(939, 400, P2D);
+  PImage inputTempImg = loadImage("input.png");
+
+  inputImg = createGraphics(inputTempImg.width, inputTempImg.height, P2D);
   outputImg = createGraphics(inputImg.width, inputImg.height, P2D);
 
   brushColor = color(128);
@@ -56,8 +55,8 @@ void draw() {
 
   int paletteWidth = 40;
 
-  imageX = width - inputImg.width - margin;
-  imageY = height - inputImg.height - margin;
+  imageX = margin + paletteWidth + margin;
+  imageY = margin;
 
   if (showInputImg) {
     inputImg.updatePixels();
@@ -69,44 +68,9 @@ void draw() {
     image(outputImg, imageX, imageY);
   }
 
-  if (mouseHitTestImage()) {
-    chartRow = mouseY - imageY;
-  }
-
-  strokeWeight(2);
-  stroke(255, 0, 0);
-  line(imageX, imageY + chartRow, imageX + inputImg.width, imageY + chartRow);
-
-  drawChart(
-    imageX, margin,
-    inputImg.width, imageY - margin - margin);
   drawPalette(
-    imageX - margin - paletteWidth, margin,
-    paletteWidth, imageY - margin - margin);
-}
-
-void drawChart(int chartX, int chartY, int chartWidth, int chartHeight) {
-  noStroke();
-  fill(32);
-  rect(chartX, chartY, chartWidth, chartHeight);
-
-  stroke(196);
-  strokeWeight(1);
-  noFill();
-  for (int x = 0; x < inputImg.width; x++) {
-    color c = inputImg.pixels[chartRow * inputImg.width + x];
-    float b = brightness(c);
-
-    if (!showInputImg) {
-      stroke(translatePixel(c));
-    }
-
-    line(
-      chartX + x,
-      chartY + chartHeight,
-      chartX + x,
-      chartY + chartHeight - map(b, 0, 255, 0, chartHeight));
-  }
+    margin, margin,
+    paletteWidth, height - margin - margin);
 }
 
 void drawPalette(int paletteX, int paletteY, int paletteWidth, int paletteHeight) {
@@ -123,21 +87,13 @@ void drawPalette(int paletteX, int paletteY, int paletteWidth, int paletteHeight
 }
 
 void reset() {
-  clear();
+  PImage inputTempImg = loadImage("input.png");
 
-  for (int i = 0; i < 150; i++) {
-    int x = randi(0, inputImg.width);
-    int y = randi(0, inputImg.height);
-    drawBrush(x, y);
-  }
-}
+  inputImg.beginDraw();
+  inputImg.image(inputTempImg, 0, 0);
+  inputImg.endDraw();
 
-void clear() {
   inputImg.loadPixels();
-  for (int i = 0; i < inputImg.pixels.length; i++) {
-    inputImg.pixels[i] = color(0);
-  }
-  inputImg.updatePixels();
 }
 
 void toggleInputOutput() {
