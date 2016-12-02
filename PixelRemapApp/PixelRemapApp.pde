@@ -4,6 +4,8 @@ int margin;
 int nextPaletteIndex;
 ArrayList<String> paletteFilenames;
 color[] palette;
+PaletteSlider paletteSlider;
+int paletteWidth;
 PGraphics inputImg, outputImg;
 
 Brush brush;
@@ -21,10 +23,13 @@ boolean showInputImg;
 FileNamer fileNamer;
 
 void setup() {
-  size(885, 830, P2D);
+  size(1024, 768, P2D);
   smooth();
 
   margin = 15;
+
+  paletteWidth = 40;
+  paletteSlider = new PaletteSlider(margin, margin, paletteWidth, height - 2 * margin);
 
   nextPaletteIndex = 0;
   paletteFilenames = new ArrayList<String>();
@@ -53,8 +58,6 @@ void setup() {
 void draw() {
   background(0);
 
-  int paletteWidth = 40;
-
   imageX = margin + paletteWidth + margin;
   imageY = margin;
 
@@ -68,9 +71,7 @@ void draw() {
     image(outputImg, imageX, imageY);
   }
 
-  drawPalette(
-    margin, margin,
-    paletteWidth, height - margin - margin);
+  paletteSlider.draw(g);
 }
 
 void drawPalette(int paletteX, int paletteY, int paletteWidth, int paletteHeight) {
@@ -117,6 +118,7 @@ void loadNextPalette() {
   for (int i = 0; i < paletteImg.width; i++) {
     palette[i] = paletteImg.pixels[i];
   }
+  paletteSlider.setPalette(palette);
 }
 
 void keyReleased() {
