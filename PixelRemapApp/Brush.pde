@@ -16,7 +16,7 @@ class Brush {
       for (int y = targetY - brushSize; y <= targetY + brushSize; y++) {
         if (y < 0 || y >= _width) continue;
         // FIXME: Factor out blend mode.
-        _g.pixels[y * _width + x] = lerpColor(pixels[y * _width + x], targetColor, 0.5);
+        _g.pixels[y * _width + x] = lerpColor(_g.pixels[y * _width + x], targetColor, 0.5);
       }
     }
   }
@@ -54,7 +54,7 @@ class Brush {
         float dy = y - targetY;
         if (dx * dx  +  dy * dy > brushSize * brushSize) continue;
         // FIXME: Factor out blend mode.
-        _g.pixels[y * _width + x] = lerpColor(pixels[y * _width + x], targetColor, 0.5);
+        _g.pixels[y * _width + x] = lerpColor(_g.pixels[y * _width + x], targetColor, 0.5);
       }
     }
   }
@@ -101,4 +101,3 @@ class Brush {
     }
   }
 }
-
