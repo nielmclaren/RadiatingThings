@@ -142,7 +142,13 @@ void keyReleased() {
   }
 }
 
+void mousePressed() {
+  paletteSlider.mousePressed();
+}
+
 void mouseReleased() {
+  paletteSlider.mouseReleased();
+
   if (mouseHitTestImage()) {
     drawBrush(mouseX - imageX, mouseY - imageY);
     stepped(mouseX - imageX, mouseY - imageY);
@@ -150,6 +156,8 @@ void mouseReleased() {
 }
 
 void mouseDragged() {
+  paletteSlider.mouseDragged();
+
   if (mouseHitTestImage() && stepCheck(mouseX, mouseY)) {
     drawBrush(mouseX - imageX, mouseY - imageY);
     stepped(mouseX - imageX, mouseY - imageY);
@@ -182,7 +190,10 @@ void stepped(int x, int y) {
 
 color translatePixel(color c) {
   float b = brightness(c);
-  return palette[floor(map(b, 0, 255, 0, palette.length - 1))];
+  int len = palette.length - 1;
+  float paletteLow = len * paletteSlider.getLow();
+  float paletteHigh = len * paletteSlider.getHigh();
+  return palette[floor(map(b, 0, 255, paletteLow, paletteHigh))];
 }
 
 float randf(float low, float high) {
