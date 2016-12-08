@@ -1,3 +1,7 @@
+import controlP5.*;
+
+
+ControlP5 cp5;
 
 int margin;
 
@@ -19,30 +23,38 @@ int imageX;
 int imageY;
 
 boolean showInputImg;
+boolean isDragging;
 
 FileNamer fileNamer;
 
 void setup() {
-  size(1024, 768, P2D);
+  size(1280, 830, P2D);
   smooth();
 
-  margin = 15;
+  PImage inputTempImg = loadImage("input.png");
 
+  margin = 15;
   paletteWidth = 40;
+
+  cp5 = new ControlP5(this);
+  cp5.addSlider("paletteOffsetSlider")
+    .setPosition(margin + paletteWidth + margin + inputTempImg.width + margin, margin)
+    .setSize(240, 20)
+    .setRange(0, 1);
+
   paletteSlider = new PaletteSlider(margin, margin, paletteWidth, height - 2 * margin);
 
   nextPaletteIndex = 0;
   paletteFilenames = new ArrayList<String>();
+  paletteFilenames.add("stripey02.png");
   paletteFilenames.add("flake01.png");
   paletteFilenames.add("blobby.png");
-  paletteFilenames.add("stripey.png");
   loadNextPalette();
 
   showInputImg = false;
+  isDragging = false;
 
   fileNamer = new FileNamer("output/export", "png");
-
-  PImage inputTempImg = loadImage("input.png");
 
   inputImg = createGraphics(inputTempImg.width, inputTempImg.height, P2D);
   outputImg = createGraphics(inputImg.width, inputImg.height, P2D);
@@ -144,24 +156,30 @@ void keyReleased() {
 
 void mousePressed() {
   paletteSlider.mousePressed();
-}
-
-void mouseReleased() {
-  paletteSlider.mouseReleased();
 
   if (mouseHitTestImage()) {
-    drawBrush(mouseX - imageX, mouseY - imageY);
-    stepped(mouseX - imageX, mouseY - imageY);
+    isDragging = true;
   }
 }
 
 void mouseDragged() {
   paletteSlider.mouseDragged();
 
-  if (mouseHitTestImage() && stepCheck(mouseX, mouseY)) {
+  if (isDragging && stepCheck(mouseX, mouseY)) {
     drawBrush(mouseX - imageX, mouseY - imageY);
     stepped(mouseX - imageX, mouseY - imageY);
   }
+}
+
+void mouseReleased() {
+  paletteSlider.mouseReleased();
+
+  if (isDragging) {
+    drawBrush(mouseX - imageX, mouseY - imageY);
+    stepped(mouseX - imageX, mouseY - imageY);
+  }
+
+  isDragging = false;
 }
 
 void drawBrush(int x, int y) {
@@ -190,10 +208,16 @@ void stepped(int x, int y) {
 
 color translatePixel(color c) {
   float b = brightness(c);
-  int len = palette.length - 1;
+  int len = palette.length;
   float paletteLow = len * paletteSlider.getLow();
   float paletteHigh = len * paletteSlider.getHigh();
-  return palette[floor(map(b, 0, 255, paletteLow, paletteHigh))];
+  float offset = cp5.getController("paletteOffsetSlider").getValue();
+  float value = map(b, 0, 255, paletteLow, paletteHigh) + offset * len;
+  int index = floor(value % len);
+  if (index >= len) {
+    index--;
+  }
+  return palette[index];
 }
 
 float randf(float low, float high) {
