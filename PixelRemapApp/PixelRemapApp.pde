@@ -1,15 +1,18 @@
 import controlP5.*;
 
+String inputFilename;
 
 ControlP5 cp5;
 
 int margin;
 
-int nextPaletteIndex;
+int paletteIndex;
 ArrayList<String> paletteFilenames;
 color[] palette;
 PaletteSlider paletteSlider;
 int paletteWidth;
+int paletteRepeatCount;
+
 PGraphics inputImg, outputImg;
 
 Brush brush;
@@ -31,7 +34,8 @@ void setup() {
   size(1280, 830, P2D);
   smooth();
 
-  PImage inputTempImg = loadImage("input.png");
+  inputFilename = "export0053.png";
+  PImage inputTempImg = loadImage(inputFilename);
 
   margin = 15;
   paletteWidth = 40;
@@ -43,13 +47,29 @@ void setup() {
     .setRange(0, 1);
 
   paletteSlider = new PaletteSlider(margin, margin, paletteWidth, height - 2 * margin);
-
-  nextPaletteIndex = 0;
+  
+  paletteRepeatCount = 1;
+  cp5.addSlider("paletteRepeatSlider")
+    .setPosition(margin + paletteWidth + margin + inputTempImg.width + margin, margin + 30)
+    .setSize(240, 20)
+    .setRange(1, 50)
+    .setValue(1)
+    .setNumberOfTickMarks(50)
+    .snapToTickMarks(true)
+    .showTickMarks(false);
+  
+  paletteIndex = 0;
   paletteFilenames = new ArrayList<String>();
+  paletteFilenames.add("stripe01.png");
+  paletteFilenames.add("flake04.png");
+  paletteFilenames.add("blacktogradient.png");
+  paletteFilenames.add("neon.png");
+  paletteFilenames.add("flake03.png");
+  paletteFilenames.add("flake02.png");
   paletteFilenames.add("stripey02.png");
   paletteFilenames.add("flake01.png");
   paletteFilenames.add("blobby.png");
-  loadNextPalette();
+  reloadPalette();
 
   showInputImg = false;
   isDragging = false;
@@ -68,6 +88,8 @@ void setup() {
 }
 
 void draw() {
+  updatePaletteRepeatCount();
+  
   background(0);
 
   imageX = margin + paletteWidth + margin;
@@ -100,7 +122,7 @@ void drawPalette(int paletteX, int paletteY, int paletteWidth, int paletteHeight
 }
 
 void reset() {
-  PImage inputTempImg = loadImage("input.png");
+  PImage inputTempImg = loadImage(inputFilename);
 
   inputImg.beginDraw();
   inputImg.image(inputTempImg, 0, 0);
@@ -121,14 +143,36 @@ void updateOutputImg() {
 }
 
 void loadNextPalette() {
-  String paletteFilename = paletteFilenames.get(nextPaletteIndex);
-  nextPaletteIndex = (nextPaletteIndex + 1) % paletteFilenames.size();
+  paletteIndex = (paletteIndex + 1) % paletteFilenames.size();
+  reloadPalette();
+}
 
+void updatePaletteRepeatCount() {
+  int sliderValue = max(1, floor(cp5.getController("paletteRepeatSlider").getValue()));
+  if (sliderValue != paletteRepeatCount) {
+    paletteRepeatCount = sliderValue;
+    reloadPalette();
+  }
+}
+
+void resetPaletteRepeatCount() {
+  cp5.getController("paletteRepeatSlider").setValue(1);
+}
+
+void reloadPalette() {
+  String paletteFilename = paletteFilenames.get(paletteIndex);
+  loadPalette(paletteFilename);
+}
+
+void loadPalette(String paletteFilename) {
+  println(paletteFilename + " " + paletteRepeatCount);
   PImage paletteImg = loadImage(paletteFilename);
-  palette = new color[paletteImg.width];
+  palette = new color[paletteImg.width * paletteRepeatCount];
   paletteImg.loadPixels();
-  for (int i = 0; i < paletteImg.width; i++) {
-    palette[i] = paletteImg.pixels[i];
+  for (int repeat = 0; repeat < paletteRepeatCount; repeat++) {
+    for (int i = 0; i < paletteImg.width; i++) {
+      palette[repeat * paletteImg.width + i] = paletteImg.pixels[i];
+    }
   }
   paletteSlider.setPalette(palette);
 }
@@ -143,6 +187,7 @@ void keyReleased() {
       clear();
       break;
     case 'p':
+      resetPaletteRepeatCount();
       loadNextPalette();
       break;
     case 't':
@@ -212,7 +257,7 @@ color translatePixel(color c) {
   float paletteLow = len * paletteSlider.getLow();
   float paletteHigh = len * paletteSlider.getHigh();
   float offset = cp5.getController("paletteOffsetSlider").getValue();
-  float value = map(b, 0, 255, paletteLow, paletteHigh) + offset * len;
+  float value = map(b, 0, 256, paletteLow, paletteHigh) + offset * len;
   int index = floor(value % len);
   if (index >= len) {
     index--;

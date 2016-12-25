@@ -119,10 +119,6 @@ public class PaletteSlider {
     return (globalY - _y) / _h;
   }
 
-  private float fractionToGlobal(float fractionY) {
-    return _y + fractionY * _h;
-  }
-
   private float fractionToLocal(float fractionY) {
     return fractionY * _h;
   }
