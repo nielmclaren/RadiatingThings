@@ -12,6 +12,7 @@ color[] palette;
 PaletteSlider paletteSlider;
 int paletteWidth;
 int paletteRepeatCount;
+boolean isMirroredPaletteRepeat;
 
 PGraphics inputImg, outputImg;
 
@@ -57,6 +58,8 @@ void setup() {
     .setNumberOfTickMarks(50)
     .snapToTickMarks(true)
     .showTickMarks(false);
+  
+  isMirroredPaletteRepeat = true;
   
   paletteIndex = 0;
   paletteFilenames = new ArrayList<String>();
@@ -171,7 +174,14 @@ void loadPalette(String paletteFilename) {
   paletteImg.loadPixels();
   for (int repeat = 0; repeat < paletteRepeatCount; repeat++) {
     for (int i = 0; i < paletteImg.width; i++) {
-      palette[repeat * paletteImg.width + i] = paletteImg.pixels[i];
+      int index;
+      if (isMirroredPaletteRepeat && repeat % 2 == 0) {
+        index = (repeat + 1) * paletteImg.width - i - 1;
+      }
+      else {
+        index = repeat * paletteImg.width + i;
+      }
+      palette[index] = paletteImg.pixels[i];
     }
   }
   paletteSlider.setPalette(palette);
