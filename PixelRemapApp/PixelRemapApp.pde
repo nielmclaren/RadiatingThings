@@ -35,7 +35,7 @@ void setup() {
   size(1280, 830, P2D);
   smooth();
 
-  inputFilename = "export0053.png";
+  inputFilename = "input.png";
   PImage inputTempImg = loadImage(inputFilename);
 
   margin = 15;
@@ -48,7 +48,7 @@ void setup() {
     .setRange(0, 1);
 
   paletteSlider = new PaletteSlider(margin, margin, paletteWidth, height - 2 * margin);
-  
+
   paletteRepeatCount = 1;
   cp5.addSlider("paletteRepeatSlider")
     .setPosition(margin + paletteWidth + margin + inputTempImg.width + margin, margin + 30)
@@ -58,9 +58,9 @@ void setup() {
     .setNumberOfTickMarks(50)
     .snapToTickMarks(true)
     .showTickMarks(false);
-  
+
   isMirroredPaletteRepeat = true;
-  
+
   paletteIndex = 0;
   paletteFilenames = new ArrayList<String>();
   paletteFilenames.add("stripe01.png");
@@ -82,9 +82,9 @@ void setup() {
   inputImg = createGraphics(inputTempImg.width, inputTempImg.height, P2D);
   outputImg = createGraphics(inputImg.width, inputImg.height, P2D);
 
-  brushColor = color(128);
+  brushColor = color(32);
   brushStep = 15;
-  brushSize = 70;
+  brushSize = 300;
   brush = new Brush(inputImg, inputImg.width, inputImg.height);
 
   reset();
@@ -92,7 +92,7 @@ void setup() {
 
 void draw() {
   updatePaletteRepeatCount();
-  
+
   background(0);
 
   imageX = margin + paletteWidth + margin;
@@ -205,6 +205,10 @@ void keyReleased() {
       break;
     case 'r':
       save(fileNamer.next());
+      break;
+    case 'm':
+      isMirroredPaletteRepeat = !isMirroredPaletteRepeat;
+      reloadPalette();
       break;
   }
 }

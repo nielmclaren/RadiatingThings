@@ -76,9 +76,12 @@ class Brush {
         v = 1 + 1 / pow(v + falloff, 2) - 1 / pow(falloff, 2);
         v = constrain(v, 0, 1);
 
-        color c = _g.pixels[y * _width + x];
+        // For some reason y-axis is inverted?
+        int index = (_height - y - 1) * _width + x;
+
+        color c = _g.pixels[index];
         // FIXME: Factor out blend mode.
-        _g.pixels[y * _width + x] = color(
+        _g.pixels[index] = color(
           constrain(red(c) + red(targetColor) * v, 0, 255),
           constrain(green(c) + green(targetColor) * v, 0, 255),
           constrain(blue(c) + blue(targetColor) * v, 0, 255));
