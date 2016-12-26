@@ -103,4 +103,59 @@ class Brush {
       }
     }
   }
+
+  void waveBrush(int targetX, int targetY, int brushSize, int wavelength, color targetColor) {
+    for (int x = targetX - brushSize; x <= targetX + brushSize; x++) {
+      if (x < 0 || x >= _width) continue;
+      for (int y = targetY - brushSize; y <= targetY + brushSize; y++) {
+        if (y < 0 || y >= _height) continue;
+        float dx = x - targetX;
+        float dy = y - targetY;
+        float d = sqrt(dx * dx  +  dy * dy);
+        if (d > brushSize) continue;
+        
+        float v = (cos(d / wavelength * (2 * PI)) + 1) / 2;
+        
+        // For some reason y-axis is inverted?
+        int index = (_height - y - 1) * _width + x;
+
+        color c = _g.pixels[index];
+        // FIXME: Factor out blend mode.
+        _g.pixels[index] = color(
+          constrain(red(c) + red(targetColor) * v, 0, 255),
+          constrain(green(c) + green(targetColor) * v, 0, 255),
+          constrain(blue(c) + blue(targetColor) * v, 0, 255));
+      }
+    }
+  }
+
+  void waveFalloffBrush(int targetX, int targetY, int brushSize, int wavelength, color targetColor) {
+    float falloff = 0.88;
+    for (int x = targetX - brushSize; x <= targetX + brushSize; x++) {
+      if (x < 0 || x >= _width) continue;
+      for (int y = targetY - brushSize; y <= targetY + brushSize; y++) {
+        if (y < 0 || y >= _height) continue;
+        float dx = x - targetX;
+        float dy = y - targetY;
+        float d = sqrt(dx * dx  +  dy * dy);
+        if (d > brushSize) continue;
+        
+        float v = d / brushSize;
+        v = 1 + 1 / pow(v + falloff, 2) - 1 / pow(falloff, 2);
+        v = constrain(v, 0, 1);
+        
+        v *= (cos(d / wavelength * (2 * PI)) + 1) / 2;
+        
+        // For some reason y-axis is inverted?
+        int index = (_height - y - 1) * _width + x;
+
+        color c = _g.pixels[index];
+        // FIXME: Factor out blend mode.
+        _g.pixels[index] = color(
+          constrain(red(c) + red(targetColor) * v, 0, 255),
+          constrain(green(c) + green(targetColor) * v, 0, 255),
+          constrain(blue(c) + blue(targetColor) * v, 0, 255));
+      }
+    }
+  }
 }

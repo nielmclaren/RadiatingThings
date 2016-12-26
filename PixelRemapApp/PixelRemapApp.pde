@@ -63,6 +63,7 @@ void setup() {
 
   paletteIndex = 0;
   paletteFilenames = new ArrayList<String>();
+  paletteFilenames.add("stripe02.png");
   paletteFilenames.add("stripe01.png");
   paletteFilenames.add("flake04.png");
   paletteFilenames.add("blacktogradient.png");
@@ -245,8 +246,10 @@ void drawBrush(int x, int y) {
   //brush.squareBrush(x, y, brushSize, brushColor);
   //brush.squareFalloffBrush(x, y, brushSize, brushColor);
   //brush.circleBrush(x, y, brushSize, brushColor);
-  brush.circleFalloffBrush(x, y, brushSize, brushColor);
+  //brush.circleFalloffBrush(x, y, brushSize, brushColor);
   //brush.voronoiBrush(x, y, brushSize, brushColor);
+  //brush.waveBrush(x, y, brushSize, 55, brushColor);
+  brush.waveFalloffBrush(x, y, brushSize, 55, brushColor);
 }
 
 boolean mouseHitTestImage() {
