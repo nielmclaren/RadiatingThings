@@ -9,6 +9,16 @@ class Brush {
     _width = w;
     _height = h;
   }
+  
+  color getPixel(int x, int y) {
+    y = _height - y - 1;
+    return _g.pixels[y * _width + x];
+  }
+  
+  void setPixel(int x, int y, color v) {
+    y = _height - y - 1;
+    _g.pixels[y * _width + x] = v;
+  }
 
   void squareBrush(int targetX, int targetY, int brushSize, color targetColor) {
     for (int x = targetX - brushSize; x <= targetX + brushSize; x++) {
@@ -16,7 +26,7 @@ class Brush {
       for (int y = targetY - brushSize; y <= targetY + brushSize; y++) {
         if (y < 0 || y >= _width) continue;
         // FIXME: Factor out blend mode.
-        _g.pixels[y * _width + x] = lerpColor(_g.pixels[y * _width + x], targetColor, 0.5);
+        setPixel(x, y, lerpColor(getPixel(x, y), targetColor, 0.5));
       }
     }
   }
@@ -35,12 +45,12 @@ class Brush {
         v = 1 + 1 / pow(v + falloff, 2) - 1 / pow(falloff, 2);
         v = constrain(v, 0, 1);
 
-        color c = _g.pixels[y * _width + x];
+        color c = getPixel(x, y);
         // FIXME: Factor out blend mode.
-        _g.pixels[y * _width + x] = color(
+        setPixel(x, y, color(
           constrain(red(c) + red(targetColor) * v, 0, 255),
           constrain(green(c) + green(targetColor) * v, 0, 255),
-          constrain(blue(c) + blue(targetColor) * v, 0, 255));
+          constrain(blue(c) + blue(targetColor) * v, 0, 255)));
       }
     }
   }
@@ -54,7 +64,7 @@ class Brush {
         float dy = y - targetY;
         if (dx * dx  +  dy * dy > brushSize * brushSize) continue;
         // FIXME: Factor out blend mode.
-        _g.pixels[y * _width + x] = lerpColor(_g.pixels[y * _width + x], targetColor, 0.5);
+        setPixel(x, y, lerpColor(getPixel(x, y), targetColor, 0.5));
       }
     }
   }
@@ -76,15 +86,12 @@ class Brush {
         v = 1 + 1 / pow(v + falloff, 2) - 1 / pow(falloff, 2);
         v = constrain(v, 0, 1);
 
-        // For some reason y-axis is inverted?
-        int index = (_height - y - 1) * _width + x;
-
-        color c = _g.pixels[index];
+        color c = getPixel(x, y);
         // FIXME: Factor out blend mode.
-        _g.pixels[index] = color(
+        setPixel(x, y, color(
           constrain(red(c) + red(targetColor) * v, 0, 255),
           constrain(green(c) + green(targetColor) * v, 0, 255),
-          constrain(blue(c) + blue(targetColor) * v, 0, 255));
+          constrain(blue(c) + blue(targetColor) * v, 0, 255)));
       }
     }
   }
@@ -99,7 +106,7 @@ class Brush {
         float v = map(dx * dx + dy * dy, 0, brushSize * brushSize, 255, 0);
         color c = g.pixels[y * _width + x];
         // FIXME: Factor out blend mode.
-        _g.pixels[y * _width + x] = color(max(brightness(c), v));
+        setPixel(x, y, color(max(brightness(c), v)));
       }
     }
   }
@@ -116,15 +123,12 @@ class Brush {
         
         float v = (cos(d / wavelength * (2 * PI)) + 1) / 2;
         
-        // For some reason y-axis is inverted?
-        int index = (_height - y - 1) * _width + x;
-
-        color c = _g.pixels[index];
+        color c = getPixel(x, y);
         // FIXME: Factor out blend mode.
-        _g.pixels[index] = color(
+        setPixel(x, y, color(
           constrain(red(c) + red(targetColor) * v, 0, 255),
           constrain(green(c) + green(targetColor) * v, 0, 255),
-          constrain(blue(c) + blue(targetColor) * v, 0, 255));
+          constrain(blue(c) + blue(targetColor) * v, 0, 255)));
       }
     }
   }
@@ -146,15 +150,12 @@ class Brush {
         
         v *= (cos(d / wavelength * (2 * PI)) + 1) / 2;
         
-        // For some reason y-axis is inverted?
-        int index = (_height - y - 1) * _width + x;
-
-        color c = _g.pixels[index];
+        color c = getPixel(x, y);
         // FIXME: Factor out blend mode.
-        _g.pixels[index] = color(
+        setPixel(x, y, color(
           constrain(red(c) + red(targetColor) * v, 0, 255),
           constrain(green(c) + green(targetColor) * v, 0, 255),
-          constrain(blue(c) + blue(targetColor) * v, 0, 255));
+          constrain(blue(c) + blue(targetColor) * v, 0, 255)));
       }
     }
   }
