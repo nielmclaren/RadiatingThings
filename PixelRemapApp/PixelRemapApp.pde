@@ -15,10 +15,11 @@ int paletteRepeatCount;
 boolean isMirroredPaletteRepeat;
 
 PGraphics inputImg, outputImg;
+FloatGrayscaleImage deepImage;
 
-Brush brush;
+FloatGrayscaleBrush brush;
 int brushSize;
-color brushColor;
+float brushValue;
 int brushStep;
 int prevStepX;
 int prevStepY;
@@ -82,11 +83,13 @@ void setup() {
 
   inputImg = createGraphics(inputTempImg.width, inputTempImg.height, P2D);
   outputImg = createGraphics(inputImg.width, inputImg.height, P2D);
-
-  brushColor = color(32);
+  
+  deepImage = new FloatGrayscaleImage(inputImg.width, inputImg.height);
+  
+  brushValue = 32;
   brushStep = 15;
   brushSize = 300;
-  brush = new Brush(inputImg, inputImg.width, inputImg.height);
+  brush = new FloatGrayscaleBrush(deepImage, inputImg.width, inputImg.height);
 
   reset();
 }
@@ -100,12 +103,11 @@ void draw() {
   imageY = margin;
 
   if (showInputImg) {
-    inputImg.updatePixels();
-    image(inputImg, imageX, imageY);
+    PImage inputImage = deepImage.getImageRef();
+    image(inputImage, imageX, imageY);
   }
   else {
     updateOutputImg();
-    outputImg.updatePixels();
     image(outputImg, imageX, imageY);
   }
 
@@ -133,6 +135,8 @@ void reset() {
   inputImg.endDraw();
 
   inputImg.loadPixels();
+  
+  deepImage.setImage(inputImg);
 }
 
 void toggleInputOutput() {
@@ -141,9 +145,12 @@ void toggleInputOutput() {
 
 void updateOutputImg() {
   outputImg.loadPixels();
-  for (int i = 0; i < outputImg.width * outputImg.height; i++) {
-    outputImg.pixels[i] = translatePixel(inputImg.pixels[i]);
+  for (int y = 0; y < outputImg.height; y++) {
+    for (int x = 0; x < outputImg.width; x++) {
+      outputImg.pixels[(outputImg.height - y - 1) * outputImg.width + x] = translateValue(deepImage.getValue(x, y));
+    }
   }
+  outputImg.updatePixels();
 }
 
 void loadNextPalette() {
@@ -243,13 +250,13 @@ void mouseReleased() {
 }
 
 void drawBrush(int x, int y) {
-  //brush.squareBrush(x, y, brushSize, brushColor);
-  //brush.squareFalloffBrush(x, y, brushSize, brushColor);
-  //brush.circleBrush(x, y, brushSize, brushColor);
-  //brush.circleFalloffBrush(x, y, brushSize, brushColor);
-  //brush.voronoiBrush(x, y, brushSize, brushColor);
-  //brush.waveBrush(x, y, brushSize, 55, brushColor);
-  brush.waveFalloffBrush(x, y, brushSize, 55, brushColor);
+  //brush.squareBrush(x, y, brushSize, brushValue);
+  //brush.squareFalloffBrush(x, y, brushSize, brushValue);
+  //brush.circleBrush(x, y, brushSize, brushValue);
+  //brush.circleFalloffBrush(x, y, brushSize, brushValue);
+  //brush.voronoiBrush(x, y, brushSize, brushValue);
+  //brush.waveBrush(x, y, brushSize, 55, brushValue);
+  brush.waveFalloffBrush(x, y, brushSize, 55, brushValue);
 }
 
 boolean mouseHitTestImage() {
@@ -268,13 +275,12 @@ void stepped(int x, int y) {
   prevStepY = y;
 }
 
-color translatePixel(color c) {
-  float b = brightness(c);
+color translateValue(float v) {
   int len = palette.length;
   float paletteLow = len * paletteSlider.getLow();
   float paletteHigh = len * paletteSlider.getHigh();
   float offset = cp5.getController("paletteOffsetSlider").getValue();
-  float value = map(b, 0, 256, paletteLow, paletteHigh) + offset * len;
+  float value = map(v, 0, 256, paletteLow, paletteHigh) + offset * len;
   int index = floor(value % len);
   if (index >= len) {
     index--;
