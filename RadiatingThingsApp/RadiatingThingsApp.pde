@@ -13,6 +13,7 @@ PaletteSlider paletteSlider;
 int paletteWidth;
 int paletteRepeatCount;
 boolean isMirroredPaletteRepeat;
+boolean isReversedPalette;
 
 PGraphics inputImg, outputImg;
 FloatGrayscaleImage deepImage;
@@ -61,9 +62,11 @@ void setup() {
     .showTickMarks(false);
 
   isMirroredPaletteRepeat = true;
+  isReversedPalette = false;
 
   paletteIndex = 0;
   paletteFilenames = new ArrayList<String>();
+  paletteFilenames.add("powerlines_palette01.png");
   paletteFilenames.add("stripe02.png");
   paletteFilenames.add("stripe01.png");
   paletteFilenames.add("flake04.png");
@@ -83,9 +86,9 @@ void setup() {
 
   inputImg = createGraphics(inputTempImg.width, inputTempImg.height, P2D);
   outputImg = createGraphics(inputImg.width, inputImg.height, P2D);
-  
+
   deepImage = new FloatGrayscaleImage(inputImg.width, inputImg.height);
-  
+
   brushValue = 32;
   brushStep = 15;
   brushSize = 300;
@@ -135,7 +138,7 @@ void reset() {
   inputImg.endDraw();
 
   inputImg.loadPixels();
-  
+
   deepImage.setImage(inputImg);
 }
 
@@ -182,12 +185,15 @@ void loadPalette(String paletteFilename) {
   paletteImg.loadPixels();
   for (int repeat = 0; repeat < paletteRepeatCount; repeat++) {
     for (int i = 0; i < paletteImg.width; i++) {
-      int index;
+      int index = i;
+      if (isReversedPalette) {
+        index = paletteImg.width - index - 1;
+      }
       if (isMirroredPaletteRepeat && repeat % 2 == 0) {
-        index = (repeat + 1) * paletteImg.width - i - 1;
+        index = (repeat + 1) * paletteImg.width - index - 1;
       }
       else {
-        index = repeat * paletteImg.width + i;
+        index = repeat * paletteImg.width + index;
       }
       palette[index] = paletteImg.pixels[i];
     }
@@ -216,6 +222,10 @@ void keyReleased() {
       break;
     case 'm':
       isMirroredPaletteRepeat = !isMirroredPaletteRepeat;
+      reloadPalette();
+      break;
+    case 'v':
+      isReversedPalette = !isReversedPalette;
       reloadPalette();
       break;
   }
@@ -253,10 +263,10 @@ void drawBrush(int x, int y) {
   //brush.squareBrush(x, y, brushSize, brushValue);
   //brush.squareFalloffBrush(x, y, brushSize, brushValue);
   //brush.circleBrush(x, y, brushSize, brushValue);
-  //brush.circleFalloffBrush(x, y, brushSize, brushValue);
+  brush.circleFalloffBrush(x, y, brushSize, brushValue);
   //brush.voronoiBrush(x, y, brushSize, brushValue);
   //brush.waveBrush(x, y, brushSize, 55, brushValue);
-  brush.waveFalloffBrush(x, y, brushSize, 55, brushValue);
+  //brush.waveFalloffBrush(x, y, brushSize, 55, brushValue);
 }
 
 boolean mouseHitTestImage() {
