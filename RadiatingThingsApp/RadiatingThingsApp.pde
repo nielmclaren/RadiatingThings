@@ -16,7 +16,7 @@ boolean isMirroredPaletteRepeat;
 boolean isReversedPalette;
 
 PGraphics inputImg, outputImg;
-FloatGrayscaleImage deepImage;
+ShortImage deepImage;
 
 int imageX;
 int imageY;
@@ -79,7 +79,7 @@ void setup() {
   inputImg = createGraphics(inputTempImg.width, inputTempImg.height, P2D);
   outputImg = createGraphics(inputImg.width, inputImg.height, P2D);
 
-  deepImage = new FloatGrayscaleImage(inputImg.width, inputImg.height);
+  deepImage = new ShortImage(inputImg.width, inputImg.height, ALPHA);
 
   reset();
 }
@@ -133,7 +133,7 @@ void updateOutputImg() {
   outputImg.loadPixels();
   for (int y = 0; y < outputImg.height; y++) {
     for (int x = 0; x < outputImg.width; x++) {
-      outputImg.pixels[(outputImg.height - y - 1) * outputImg.width + x] = translateValue(deepImage.getValue(x, y));
+      outputImg.pixels[(outputImg.height - y - 1) * outputImg.width + x] = translateValue(brightness(deepImage.getPixel(x, y)));
     }
   }
   outputImg.updatePixels();
