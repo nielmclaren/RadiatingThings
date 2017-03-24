@@ -18,13 +18,6 @@ boolean isReversedPalette;
 PGraphics inputImg, outputImg;
 FloatGrayscaleImage deepImage;
 
-FloatGrayscaleBrush brush;
-int brushSize;
-float brushValue;
-int brushStep;
-int prevStepX;
-int prevStepY;
-
 int imageX;
 int imageY;
 
@@ -89,11 +82,6 @@ void setup() {
 
   deepImage = new FloatGrayscaleImage(inputImg.width, inputImg.height);
 
-  brushValue = 32;
-  brushStep = 15;
-  brushSize = 300;
-  brush = new FloatGrayscaleBrush(deepImage, inputImg.width, inputImg.height);
-
   reset();
 }
 
@@ -140,10 +128,6 @@ void reset() {
   inputImg.loadPixels();
 
   deepImage.setImage(inputImg);
-}
-
-void toggleInputOutput() {
-  showInputImg = !showInputImg;
 }
 
 void updateOutputImg() {
@@ -203,26 +187,26 @@ void loadPalette(String paletteFilename) {
 
 void keyReleased() {
   switch (key) {
+    case 'c':
+      clear();
+      break;
     case 'e':
     case ' ':
       reset();
       break;
-    case 'c':
-      clear();
+    case 'm':
+      isMirroredPaletteRepeat = !isMirroredPaletteRepeat;
+      reloadPalette();
       break;
     case 'p':
       resetPaletteRepeatCount();
       loadNextPalette();
       break;
-    case 't':
-      toggleInputOutput();
-      break;
     case 'r':
       save(fileNamer.next());
       break;
-    case 'm':
-      isMirroredPaletteRepeat = !isMirroredPaletteRepeat;
-      reloadPalette();
+    case 't':
+      showInputImg = !showInputImg;
       break;
     case 'v':
       isReversedPalette = !isReversedPalette;
@@ -241,48 +225,16 @@ void mousePressed() {
 
 void mouseDragged() {
   paletteSlider.mouseDragged();
-
-  if (isDragging && stepCheck(mouseX, mouseY)) {
-    drawBrush(mouseX - imageX, mouseY - imageY);
-    stepped(mouseX - imageX, mouseY - imageY);
-  }
 }
 
 void mouseReleased() {
   paletteSlider.mouseReleased();
-
-  if (isDragging) {
-    drawBrush(mouseX - imageX, mouseY - imageY);
-    stepped(mouseX - imageX, mouseY - imageY);
-  }
-
   isDragging = false;
-}
-
-void drawBrush(int x, int y) {
-  //brush.squareBrush(x, y, brushSize, brushValue);
-  //brush.squareFalloffBrush(x, y, brushSize, brushValue);
-  //brush.circleBrush(x, y, brushSize, brushValue);
-  brush.circleFalloffBrush(x, y, brushSize, brushValue);
-  //brush.voronoiBrush(x, y, brushSize, brushValue);
-  //brush.waveBrush(x, y, brushSize, 55, brushValue);
-  //brush.waveFalloffBrush(x, y, brushSize, 55, brushValue);
 }
 
 boolean mouseHitTestImage() {
   return mouseX > imageX && mouseX < imageX + inputImg.width
       && mouseY > imageY && mouseY < imageY + inputImg.height;
-}
-
-boolean stepCheck(int x, int y) {
-  float dx = x - prevStepX;
-  float dy = y - prevStepY;
-  return brushStep * brushStep < dx * dx  +  dy * dy;
-}
-
-void stepped(int x, int y) {
-  prevStepX = x;
-  prevStepY = y;
 }
 
 color translateValue(float v) {
@@ -298,10 +250,3 @@ color translateValue(float v) {
   return palette[index];
 }
 
-float randf(float low, float high) {
-  return low + random(1) * (high - low);
-}
-
-int randi(int low, int high) {
-  return low + floor(random(1) * (high - low));
-}
