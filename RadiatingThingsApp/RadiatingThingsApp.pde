@@ -22,7 +22,7 @@ int imageX;
 int imageY;
 
 boolean showInputImg;
-boolean isDragging;
+PVector lineStart;
 
 FileNamer fileNamer;
 
@@ -73,7 +73,6 @@ void setup() {
   reloadPalette();
 
   showInputImg = false;
-  isDragging = false;
 
   fileNamer = new FileNamer("output/export", "png");
 
@@ -219,7 +218,7 @@ void mousePressed() {
   paletteSlider.mousePressed();
 
   if (mouseHitTestImage()) {
-    isDragging = true;
+    lineStart = new PVector(mouseX - imageX, mouseY - imageY);
   }
 }
 
@@ -229,7 +228,17 @@ void mouseDragged() {
 
 void mouseReleased() {
   paletteSlider.mouseReleased();
-  isDragging = false;
+
+  if (lineStart != null) {
+    inputImg.beginDraw();
+    inputImg.stroke(255);
+    inputImg.strokeWeight(2);
+    inputImg.line(lineStart.x, lineStart.y, mouseX - imageX, mouseY - imageY);
+    inputImg.endDraw();
+
+    deepImage.setImage(inputImg);
+    lineStart = null;
+  }
 }
 
 boolean mouseHitTestImage() {
