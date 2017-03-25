@@ -12,7 +12,7 @@ class ShortImageBlurrer {
   int[] r;
   int[] g;
   int[] b;
-  int rsum,gsum,bsum,x,y,i,pi,p,pr,pg,pb,pi1,p1,pr1,pg1,pb1,pi2,p2,pr2,pg2,pb2,yp,yi,yw;
+  int rsum,gsum,bsum,x,y,i,pi,pr,pg,pb,pi1,pr1,pg1,pb1,pi2,pr2,pg2,pb2,yp,yi,yw;
   int[] vmin;
   int[] vmax;
   int[] dv;
@@ -113,12 +113,12 @@ class ShortImageBlurrer {
           vmin[y]=min(y+radius+1,hm)*w;
           vmax[y]=max(y-radius,0)*w;
         }
-        p1=x+vmin[y];
-        p2=x+vmax[y];
+        pi1=x+vmin[y];
+        pi2=x+vmax[y];
 
-        rsum+=r[p1]-r[p2];
-        gsum+=g[p1]-g[p2];
-        bsum+=b[p1]-b[p2];
+        rsum+=r[pi1]-r[pi2];
+        gsum+=g[pi1]-g[pi2];
+        bsum+=b[pi1]-b[pi2];
 
         yi+=w;
       }
