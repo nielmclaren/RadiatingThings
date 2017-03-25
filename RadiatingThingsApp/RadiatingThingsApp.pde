@@ -15,13 +15,14 @@ int paletteRepeatCount;
 boolean isMirroredPaletteRepeat;
 boolean isReversedPalette;
 
-PGraphics inputImg, outputImg;
-ShortImage deepImage;
+PGraphics inputImage, outputImage;
+ShortImage shortImage;
+ShortImageBlurrer blurrer;
 
 int imageX;
 int imageY;
 
-boolean showInputImg;
+boolean showInputImage;
 PVector lineStart;
 
 FileNamer fileNamer;
@@ -31,14 +32,14 @@ void setup() {
   smooth();
 
   inputFilename = "input.png";
-  PImage inputTempImg = loadImage(inputFilename);
+  PImage inputTempImage = loadImage(inputFilename);
 
   margin = 15;
   paletteWidth = 40;
 
   cp5 = new ControlP5(this);
   cp5.addSlider("paletteOffsetSlider")
-    .setPosition(margin + paletteWidth + margin + inputTempImg.width + margin, margin)
+    .setPosition(margin + paletteWidth + margin + inputTempImage.width + margin, margin)
     .setSize(240, 20)
     .setRange(0, 1);
 
@@ -46,7 +47,7 @@ void setup() {
 
   paletteRepeatCount = 1;
   cp5.addSlider("paletteRepeatSlider")
-    .setPosition(margin + paletteWidth + margin + inputTempImg.width + margin, margin + 30)
+    .setPosition(margin + paletteWidth + margin + inputTempImage.width + margin, margin + 30)
     .setSize(240, 20)
     .setRange(1, 50)
     .setValue(1)
@@ -72,14 +73,15 @@ void setup() {
   paletteFilenames.add("blobby.png");
   reloadPalette();
 
-  showInputImg = false;
+  showInputImage = false;
 
   fileNamer = new FileNamer("output/export", "png");
 
-  inputImg = createGraphics(inputTempImg.width, inputTempImg.height, P2D);
-  outputImg = createGraphics(inputImg.width, inputImg.height, P2D);
+  inputImage = createGraphics(inputTempImage.width, inputTempImage.height, P2D);
+  outputImage = createGraphics(inputImage.width, inputImage.height, P2D);
 
-  deepImage = new ShortImage(inputImg.width, inputImg.height, ALPHA);
+  shortImage = new ShortImage(inputImage.width, inputImage.height, RGB);
+  blurrer = new ShortImageBlurrer(inputImage.width, inputImage.height, 30);
 
   reset();
 }
@@ -92,13 +94,12 @@ void draw() {
   imageX = margin + paletteWidth + margin;
   imageY = margin;
 
-  if (showInputImg) {
-    PImage inputImage = deepImage.getImageRef();
-    image(inputImage, imageX, imageY);
+  if (showInputImage) {
+    image(shortImage.getImageRef(), imageX, imageY);
   }
   else {
-    updateOutputImg();
-    image(outputImg, imageX, imageY);
+    updateOutputImage();
+    image(outputImage, imageX, imageY);
   }
 
   paletteSlider.draw(g);
@@ -118,25 +119,28 @@ void drawPalette(int paletteX, int paletteY, int paletteWidth, int paletteHeight
 }
 
 void reset() {
-  PImage inputTempImg = loadImage(inputFilename);
+  PImage inputTempImage = loadImage(inputFilename);
 
-  inputImg.beginDraw();
-  inputImg.image(inputTempImg, 0, 0);
-  inputImg.endDraw();
+  inputImage.beginDraw();
+  inputImage.image(inputTempImage, 0, 0);
+  inputImage.endDraw();
 
-  inputImg.loadPixels();
+  inputImage.loadPixels();
 
-  deepImage.setImage(inputImg);
+  shortImage.setImage(inputImage);
+  blurrer.blur(shortImage.getValuesRef(), 3);
 }
 
-void updateOutputImg() {
-  outputImg.loadPixels();
-  for (int y = 0; y < outputImg.height; y++) {
-    for (int x = 0; x < outputImg.width; x++) {
-      outputImg.pixels[(outputImg.height - y - 1) * outputImg.width + x] = translateValue(brightness(deepImage.getPixel(x, y)));
+void updateOutputImage() {
+  outputImage.beginDraw();
+  outputImage.loadPixels();
+  for (int y = 0; y < outputImage.height; y++) {
+    for (int x = 0; x < outputImage.width; x++) {
+      outputImage.pixels[y * outputImage.width + x] = translateValue(brightness(shortImage.getPixel(x, y)));
     }
   }
-  outputImg.updatePixels();
+  outputImage.updatePixels();
+  outputImage.endDraw();
 }
 
 void loadNextPalette() {
@@ -163,22 +167,22 @@ void reloadPalette() {
 
 void loadPalette(String paletteFilename) {
   println(paletteFilename + " " + paletteRepeatCount);
-  PImage paletteImg = loadImage(paletteFilename);
-  palette = new color[paletteImg.width * paletteRepeatCount];
-  paletteImg.loadPixels();
+  PImage paletteImage = loadImage(paletteFilename);
+  palette = new color[paletteImage.width * paletteRepeatCount];
+  paletteImage.loadPixels();
   for (int repeat = 0; repeat < paletteRepeatCount; repeat++) {
-    for (int i = 0; i < paletteImg.width; i++) {
+    for (int i = 0; i < paletteImage.width; i++) {
       int index = i;
       if (isReversedPalette) {
-        index = paletteImg.width - index - 1;
+        index = paletteImage.width - index - 1;
       }
       if (isMirroredPaletteRepeat && repeat % 2 == 0) {
-        index = (repeat + 1) * paletteImg.width - index - 1;
+        index = (repeat + 1) * paletteImage.width - index - 1;
       }
       else {
-        index = repeat * paletteImg.width + index;
+        index = repeat * paletteImage.width + index;
       }
-      palette[index] = paletteImg.pixels[i];
+      palette[index] = paletteImage.pixels[i];
     }
   }
   paletteSlider.setPalette(palette);
@@ -202,10 +206,10 @@ void keyReleased() {
       loadNextPalette();
       break;
     case 'r':
-      save(fileNamer.next());
+      saveRender();
       break;
     case 't':
-      showInputImg = !showInputImg;
+      showInputImage = !showInputImage;
       break;
     case 'v':
       isReversedPalette = !isReversedPalette;
@@ -230,20 +234,41 @@ void mouseReleased() {
   paletteSlider.mouseReleased();
 
   if (lineStart != null) {
-    inputImg.beginDraw();
-    inputImg.stroke(255);
-    inputImg.strokeWeight(2);
-    inputImg.line(lineStart.x, lineStart.y, mouseX - imageX, mouseY - imageY);
-    inputImg.endDraw();
+    inputImage.beginDraw();
+    inputImage.stroke(255);
+    inputImage.strokeWeight(10);
+    inputImage.line(lineStart.x, lineStart.y, mouseX - imageX, mouseY - imageY);
+    inputImage.endDraw();
 
-    deepImage.setImage(inputImg);
+    shortImage.setImage(inputImage);
+    blurrer.blur(shortImage.getValuesRef(), 3);
+
     lineStart = null;
   }
 }
 
+void saveRender() {
+  String filename = fileNamer.next();
+  updateOutputImage();
+  outputImage.save(filename);
+
+  String rawFilename = getRawFilename(filename);
+  inputImage.save(savePath(rawFilename));
+}
+
+String getRawFilename(String filename) {
+  int index;
+
+  index = filename.lastIndexOf('.');
+  String pathAndBaseName = filename.substring(0, index);
+  String extension = filename.substring(index);
+
+  return pathAndBaseName + "raw" + extension;
+}
+
 boolean mouseHitTestImage() {
-  return mouseX > imageX && mouseX < imageX + inputImg.width
-      && mouseY > imageY && mouseY < imageY + inputImg.height;
+  return mouseX > imageX && mouseX < imageX + inputImage.width
+      && mouseY > imageY && mouseY < imageY + inputImage.height;
 }
 
 color translateValue(float v) {

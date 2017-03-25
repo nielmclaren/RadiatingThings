@@ -20,6 +20,10 @@ class ShortImage {
     _isImageDirty = true;
   }
 
+  short[] getValuesRef() {
+    return _values;
+  }
+
   color getPixel(int x, int y) {
     int pixelIndex = y * _width + x;
 
