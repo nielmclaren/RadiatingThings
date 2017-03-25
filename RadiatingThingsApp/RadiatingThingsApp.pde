@@ -5,13 +5,9 @@ String inputFilename;
 ControlP5 cp5;
 
 int margin;
-
-int paletteIndex;
-ArrayList<String> paletteFilenames;
-color[] palette;
 int paletteWidth;
-boolean isReversedPalette;
 
+color[] palette;
 PGraphics inputImage, outputImage;
 ShortImage shortImage;
 ShortImageBlurrer blurrer;
@@ -40,20 +36,7 @@ void setup() {
     .setSize(240, 20)
     .setRange(0, 1);
 
-  paletteIndex = 0;
-  paletteFilenames = new ArrayList<String>();
-  paletteFilenames.add("powerlines_palette01.png");
-  paletteFilenames.add("stripe02.png");
-  paletteFilenames.add("stripe01.png");
-  paletteFilenames.add("flake04.png");
-  paletteFilenames.add("blacktogradient.png");
-  paletteFilenames.add("neon.png");
-  paletteFilenames.add("flake03.png");
-  paletteFilenames.add("flake02.png");
-  paletteFilenames.add("stripey02.png");
-  paletteFilenames.add("flake01.png");
-  paletteFilenames.add("blobby.png");
-  reloadPalette();
+  regeneratePalette();
 
   showInputImage = false;
 
@@ -80,7 +63,6 @@ void draw() {
     image(shortImage.getImageRef(), imageX, imageY);
   }
   else {
-    updateOutputImage();
     image(outputImage, imageX, imageY);
   }
 }
@@ -90,7 +72,8 @@ void drawPalette(int paletteX, int paletteY, int paletteWidth, int paletteHeight
   fill(32);
   rect(paletteX - 2, paletteY - 2, paletteWidth + 4, paletteHeight + 4);
 
-  for (int i = 0; i < palette.length; i++) {
+  for (int y = 0; y < paletteHeight; y++) {
+    int i = floor(y * palette.length / paletteHeight);
     fill(palette[i]);
     rect(
       paletteX, paletteY,
@@ -98,20 +81,27 @@ void drawPalette(int paletteX, int paletteY, int paletteWidth, int paletteHeight
   }
 }
 
+void clear() {
+  inputImage.beginDraw();
+  inputImage.background(0);
+  inputImage.endDraw();
+  updateOutputImage();
+}
+
 void reset() {
   PImage inputTempImage = loadImage(inputFilename);
-
   inputImage.beginDraw();
   inputImage.image(inputTempImage, 0, 0);
   inputImage.endDraw();
-
-  inputImage.loadPixels();
-
-  shortImage.setImage(inputImage);
-  blurrer.blur(shortImage.getValuesRef(), 3);
+  updateOutputImage();
 }
 
 void updateOutputImage() {
+  shortImage.setImage(inputImage);
+  blurrer.blur(shortImage.getValuesRef(), 3);
+
+  inputImage.loadPixels();
+
   outputImage.beginDraw();
   outputImage.loadPixels();
   for (int y = 0; y < outputImage.height; y++) {
@@ -123,7 +113,7 @@ void updateOutputImage() {
   outputImage.endDraw();
 }
 
-void reloadPalette() {
+void regeneratePalette() {
   int shortRange = Short.MAX_VALUE - Short.MIN_VALUE;
   float offset = cp5.getController("paletteOffsetSlider").getValue();
   palette = new color[shortRange];
@@ -136,6 +126,22 @@ void reloadPalette() {
 }
 
 void keyReleased() {
+  float offset;
+  if (key == CODED) {
+    switch (keyCode) {
+      case UP:
+        adjustOffset(0.1);
+        regeneratePalette();
+        updateOutputImage();
+        break;
+      case DOWN:
+        adjustOffset(-0.1);
+        regeneratePalette();
+        updateOutputImage();
+        break;
+    }
+  }
+
   switch (key) {
     case 'c':
       clear();
@@ -166,9 +172,7 @@ void mouseReleased() {
     inputImage.strokeWeight(10);
     inputImage.line(lineStart.x, lineStart.y, mouseX - imageX, mouseY - imageY);
     inputImage.endDraw();
-
-    shortImage.setImage(inputImage);
-    blurrer.blur(shortImage.getValuesRef(), 3);
+    updateOutputImage();
 
     lineStart = null;
   }
@@ -176,10 +180,22 @@ void mouseReleased() {
 
 void controlEvent(ControlEvent theEvent) {
   if (theEvent.isFrom(cp5.getController("paletteOffsetSlider"))) {
-    reloadPalette();
+    regeneratePalette();
+    updateOutputImage();
   }
 }
 
+void adjustOffset(float amount) {
+  float offset = cp5.getController("paletteOffsetSlider").getValue();
+  offset += amount;
+  while (offset < 0) {
+    offset += 1;
+  }
+  while (offset >= 1) {
+    offset -= 1;
+  }
+  cp5.getController("paletteOffsetSlider").setValue(offset);
+}
 
 void saveRender() {
   String filename = fileNamer.next();
