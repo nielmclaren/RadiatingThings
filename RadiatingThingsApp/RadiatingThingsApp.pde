@@ -8,6 +8,7 @@ int margin;
 int paletteWidth;
 
 color[] palette;
+PImage baseImage;
 PGraphics inputImage, outputImage;
 ShortImage shortImage;
 ShortImageBlurrer blurrer;
@@ -16,6 +17,7 @@ int imageX;
 int imageY;
 
 boolean showInputImage;
+boolean showBaseImage;
 PVector lineStart;
 
 FileNamer fileNamer;
@@ -23,6 +25,8 @@ FileNamer fileNamer;
 void setup() {
   size(1280, 830, P2D);
   smooth();
+
+  baseImage = loadImage("data/hollyburn.jpg");
 
   inputFilename = "input.png";
   PImage inputTempImage = loadImage(inputFilename);
@@ -39,6 +43,7 @@ void setup() {
   regeneratePalette();
 
   showInputImage = false;
+  showBaseImage = false;
 
   fileNamer = new FileNamer("output/export", "png");
 
@@ -102,14 +107,24 @@ void updateOutputImage() {
 
   inputImage.loadPixels();
 
-  outputImage.beginDraw();
-  outputImage.loadPixels();
-  for (int y = 0; y < outputImage.height; y++) {
-    for (int x = 0; x < outputImage.width; x++) {
-      outputImage.pixels[y * outputImage.width + x] = translateValue(shortImage.getRedValue(x, y));
+  PGraphics translatedImage = createGraphics(inputImage.width, inputImage.height, P2D);
+  translatedImage.beginDraw();
+  translatedImage.loadPixels();
+  for (int y = 0; y < translatedImage.height; y++) {
+    for (int x = 0; x < translatedImage.width; x++) {
+      translatedImage.pixels[y * translatedImage.width + x] = translateValue(shortImage.getRedValue(x, y));
     }
   }
-  outputImage.updatePixels();
+  translatedImage.updatePixels();
+  translatedImage.endDraw();
+
+  outputImage.beginDraw();
+  outputImage.blendMode(BLEND);
+  if (showBaseImage) {
+    outputImage.image(baseImage, 0, 0);
+    outputImage.blendMode(MULTIPLY);
+  }
+  outputImage.image(translatedImage, 0, 0);
   outputImage.endDraw();
 }
 
@@ -120,7 +135,7 @@ void regeneratePalette() {
   for (int i = 0; i < shortRange; i++) {
     float k = float(i) / shortRange;
     palette[i] = color(255. * (
-          (cos((20 * k + offset) * 2 * PI) / 2 + 0.5) * 4 * k
+          1 - (cos((20 * k + offset) * 2 * PI) / 2 + 0.5) * 4 * k
         ));
   }
 }
@@ -143,6 +158,10 @@ void keyReleased() {
   }
 
   switch (key) {
+    case 'b':
+      showBaseImage = !showBaseImage;
+      updateOutputImage();
+      break;
     case 'c':
       clear();
       break;
