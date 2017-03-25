@@ -24,6 +24,11 @@ class ShortImage {
     return _values;
   }
 
+  short getRedValue(int x, int y) {
+    int pixelIndex = y * _width + x;
+    return _values[pixelIndex * _numChannels + 0];
+  }
+
   color getPixel(int x, int y) {
     int pixelIndex = y * _width + x;
 
