@@ -20,7 +20,7 @@ boolean showInputImage;
 boolean showBaseImage;
 PVector lineStart;
 
-FileNamer fileNamer;
+FileNamer animationFolderNamer, fileNamer;
 
 void setup() {
   size(1280, 830, P2D);
@@ -45,6 +45,7 @@ void setup() {
   showInputImage = false;
   showBaseImage = false;
 
+  animationFolderNamer = new FileNamer("output/anim", "/");
   fileNamer = new FileNamer("output/export", "png");
 
   inputImage = createGraphics(inputTempImage.width, inputTempImage.height, P2D);
@@ -158,6 +159,9 @@ void keyReleased() {
   }
 
   switch (key) {
+    case 'a':
+      saveAnimation();
+      break;
     case 'b':
       showBaseImage = !showBaseImage;
       updateOutputImage();
@@ -214,6 +218,21 @@ void adjustOffset(float amount) {
     offset -= 1;
   }
   cp5.getController("paletteOffsetSlider").setValue(offset);
+}
+
+void saveAnimation() {
+  FileNamer frameNamer = new FileNamer(animationFolderNamer.next() + "frame", "png");
+
+  int frameCount = 30;
+  for (int i = 0; i < frameCount; i++) {
+    String filename = frameNamer.next();
+
+    cp5.getController("paletteOffsetSlider").setValue(float(i) / frameCount);
+    regeneratePalette();
+    updateOutputImage();
+
+    outputImage.save(filename);
+  }
 }
 
 void saveRender() {
