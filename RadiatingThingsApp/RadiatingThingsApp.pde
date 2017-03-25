@@ -53,7 +53,7 @@ void setup() {
   paletteFilenames.add("stripey02.png");
   paletteFilenames.add("flake01.png");
   paletteFilenames.add("blobby.png");
-  loadPalette();
+  reloadPalette();
 
   showInputImage = false;
 
@@ -123,11 +123,15 @@ void updateOutputImage() {
   outputImage.endDraw();
 }
 
-void loadPalette() {
+void reloadPalette() {
   int shortRange = Short.MAX_VALUE - Short.MIN_VALUE;
+  float offset = cp5.getController("paletteOffsetSlider").getValue();
   palette = new color[shortRange];
   for (int i = 0; i < shortRange; i++) {
-    palette[i] = color(255. * (cos(20 * (float(i) / shortRange) * 2 * PI) / 2 + 0.5));
+    float k = float(i) / shortRange;
+    palette[i] = color(255. * (
+          (cos((20 * k + offset) * 2 * PI) / 2 + 0.5) * 4 * k
+        ));
   }
 }
 
@@ -170,6 +174,13 @@ void mouseReleased() {
   }
 }
 
+void controlEvent(ControlEvent theEvent) {
+  if (theEvent.isFrom(cp5.getController("paletteOffsetSlider"))) {
+    reloadPalette();
+  }
+}
+
+
 void saveRender() {
   String filename = fileNamer.next();
   updateOutputImage();
@@ -196,8 +207,7 @@ boolean mouseHitTestImage() {
 
 color translateValue(short v) {
   int len = palette.length;
-  float offset = cp5.getController("paletteOffsetSlider").getValue();
-  float value = map(v, Short.MIN_VALUE, Short.MAX_VALUE, 0, len) + offset * len;
+  float value = map(v, Short.MIN_VALUE, Short.MAX_VALUE, 0, len);
   int index = floor(value % len);
   if (index >= len) {
     index--;
