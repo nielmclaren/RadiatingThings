@@ -26,7 +26,7 @@ void setup() {
   size(1280, 830, P2D);
   smooth();
 
-  baseImage = loadImage("data/hollyburn.jpg");
+  baseImage = loadImage("data/quarryrock.png");
 
   inputFilename = "input.png";
   PImage inputTempImage = loadImage(inputFilename);
@@ -59,17 +59,17 @@ void setup() {
     .setNumberOfTickMarks(100 + 1)
     .snapToTickMarks(true)
     .showTickMarks(false)
-    .setValue(18);
+    .setValue(27);
   currY += 30;
 
   cp5.addSlider("wavelengthWeightingSlider")
     .setPosition(margin + paletteWidth + margin + inputTempImage.width + margin, currY)
     .setSize(240, 20)
     .setRange(0, 1)
-    .setNumberOfTickMarks(100 + 1)
+    .setNumberOfTickMarks(20 + 1)
     .snapToTickMarks(true)
     .showTickMarks(false)
-    .setValue(0.5);
+    .setValue(0.7);
   currY += 30;
 
   cp5.addSlider("multiplierSlider")
@@ -77,6 +77,18 @@ void setup() {
     .setSize(240, 20)
     .setRange(0, 20)
     .setValue(2);
+  currY += 30;
+
+  currY += 30;
+
+  cp5.addSlider("blurRadiusSlider")
+    .setPosition(margin + paletteWidth + margin + inputTempImage.width + margin, currY)
+    .setSize(240, 20)
+    .setRange(0, 100)
+    .setNumberOfTickMarks(100 + 1)
+    .snapToTickMarks(true)
+    .showTickMarks(false)
+    .setValue(30);
   currY += 30;
 
   regeneratePalette();
@@ -263,6 +275,10 @@ void controlEvent(ControlEvent theEvent) {
       || theEvent.isFrom(cp5.getController("wavelengthWeightingSlider"))
       || theEvent.isFrom(cp5.getController("multiplierSlider"))) {
     regeneratePalette();
+    updateOutputImage();
+  } else if (theEvent.isFrom(cp5.getController("blurRadiusSlider"))) {
+    int blur = floor(cp5.getController("blurRadiusSlider").getValue());
+    blurrer = new ShortImageBlurrer(inputImage.width, inputImage.height, blur);
     updateOutputImage();
   }
 }
