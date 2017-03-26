@@ -45,8 +45,38 @@ void setup() {
   cp5.addSlider("wavelengthSlider")
     .setPosition(margin + paletteWidth + margin + inputTempImage.width + margin, currY)
     .setSize(240, 20)
-    .setRange(0, 200)
-    .setValue(40);
+    .setRange(0, 100)
+    .setNumberOfTickMarks(100 + 1)
+    .snapToTickMarks(true)
+    .showTickMarks(false)
+    .setValue(3);
+  currY += 30;
+
+  cp5.addSlider("wavelengthSlider2")
+    .setPosition(margin + paletteWidth + margin + inputTempImage.width + margin, currY)
+    .setSize(240, 20)
+    .setRange(0, 100)
+    .setNumberOfTickMarks(100 + 1)
+    .snapToTickMarks(true)
+    .showTickMarks(false)
+    .setValue(18);
+  currY += 30;
+
+  cp5.addSlider("wavelengthWeightingSlider")
+    .setPosition(margin + paletteWidth + margin + inputTempImage.width + margin, currY)
+    .setSize(240, 20)
+    .setRange(0, 1)
+    .setNumberOfTickMarks(100 + 1)
+    .snapToTickMarks(true)
+    .showTickMarks(false)
+    .setValue(0.5);
+  currY += 30;
+
+  cp5.addSlider("multiplierSlider")
+    .setPosition(margin + paletteWidth + margin + inputTempImage.width + margin, currY)
+    .setSize(240, 20)
+    .setRange(0, 20)
+    .setValue(2);
   currY += 30;
 
   regeneratePalette();
@@ -141,14 +171,29 @@ void updateOutputImage() {
 void regeneratePalette() {
   int shortRange = Short.MAX_VALUE - Short.MIN_VALUE;
   float offset = cp5.getController("paletteOffsetSlider").getValue();
-  float wavelength = cp5.getController("wavelengthSlider").getValue();
+  int wavelength1 = floor(cp5.getController("wavelengthSlider").getValue());
+  int wavelength2 = floor(cp5.getController("wavelengthSlider2").getValue());
+  float weight = cp5.getController("wavelengthWeightingSlider").getValue();
+  int totalWavelength = getCombinedWavelength(wavelength1, wavelength2);
+  float multiplier = cp5.getController("multiplierSlider").getValue();
   palette = new color[shortRange];
   for (int i = 0; i < shortRange; i++) {
     float k = float(i) / shortRange;
-    palette[i] = color(255. * (
-          1 - (cos((wavelength * k + offset) * 2 * PI) / 2 + 0.5) * 4 * k
-        ));
+    palette[i] = color(255. * (1 - multiplier * k * (
+          weight * (cos((k * wavelength1 + offset * totalWavelength) * 2 * PI) / 2 + 0.5)
+          + (1 - weight) * (cos((k * wavelength2 + offset * totalWavelength) * 2 * PI) / 2 + 0.5)
+        )));
   }
+}
+
+int getCombinedWavelength(int w1, int w2) {
+  int low = min(w1, w2);
+  int high = max(w1, w2);
+  int candidate = high;
+  while (candidate % low != 0) {
+    candidate += high;
+  }
+  return candidate;
 }
 
 void keyReleased() {
@@ -213,7 +258,10 @@ void mouseReleased() {
 
 void controlEvent(ControlEvent theEvent) {
   if (theEvent.isFrom(cp5.getController("paletteOffsetSlider"))
-      || theEvent.isFrom(cp5.getController("wavelengthSlider"))) {
+      || theEvent.isFrom(cp5.getController("wavelengthSlider"))
+      || theEvent.isFrom(cp5.getController("wavelengthSlider2"))
+      || theEvent.isFrom(cp5.getController("wavelengthWeightingSlider"))
+      || theEvent.isFrom(cp5.getController("multiplierSlider"))) {
     regeneratePalette();
     updateOutputImage();
   }
@@ -234,7 +282,10 @@ void adjustOffset(float amount) {
 void saveAnimation() {
   FileNamer frameNamer = new FileNamer(animationFolderNamer.next() + "frame", "png");
 
-  int frameCount = 30;
+  int wavelength1 = floor(cp5.getController("wavelengthSlider").getValue());
+  int wavelength2 = floor(cp5.getController("wavelengthSlider2").getValue());
+  int totalWavelength = getCombinedWavelength(wavelength1, wavelength2);
+  int frameCount = 10 * totalWavelength;
   for (int i = 0; i < frameCount; i++) {
     String filename = frameNamer.next();
 
