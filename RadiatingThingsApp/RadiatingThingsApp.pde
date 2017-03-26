@@ -33,17 +33,26 @@ void setup() {
 
   margin = 15;
   paletteWidth = 40;
+  int currY = margin;
 
   cp5 = new ControlP5(this);
   cp5.addSlider("paletteOffsetSlider")
-    .setPosition(margin + paletteWidth + margin + inputTempImage.width + margin, margin)
+    .setPosition(margin + paletteWidth + margin + inputTempImage.width + margin, currY)
     .setSize(240, 20)
     .setRange(0, 1);
+  currY += 30;
+
+  cp5.addSlider("wavelengthSlider")
+    .setPosition(margin + paletteWidth + margin + inputTempImage.width + margin, currY)
+    .setSize(240, 20)
+    .setRange(0, 200)
+    .setValue(40);
+  currY += 30;
 
   regeneratePalette();
 
   showInputImage = false;
-  showBaseImage = false;
+  showBaseImage = true;
 
   animationFolderNamer = new FileNamer("output/anim", "/");
   fileNamer = new FileNamer("output/export", "png");
@@ -132,11 +141,12 @@ void updateOutputImage() {
 void regeneratePalette() {
   int shortRange = Short.MAX_VALUE - Short.MIN_VALUE;
   float offset = cp5.getController("paletteOffsetSlider").getValue();
+  float wavelength = cp5.getController("wavelengthSlider").getValue();
   palette = new color[shortRange];
   for (int i = 0; i < shortRange; i++) {
     float k = float(i) / shortRange;
     palette[i] = color(255. * (
-          1 - (cos((20 * k + offset) * 2 * PI) / 2 + 0.5) * 4 * k
+          1 - (cos((wavelength * k + offset) * 2 * PI) / 2 + 0.5) * 4 * k
         ));
   }
 }
@@ -202,7 +212,8 @@ void mouseReleased() {
 }
 
 void controlEvent(ControlEvent theEvent) {
-  if (theEvent.isFrom(cp5.getController("paletteOffsetSlider"))) {
+  if (theEvent.isFrom(cp5.getController("paletteOffsetSlider"))
+      || theEvent.isFrom(cp5.getController("wavelengthSlider"))) {
     regeneratePalette();
     updateOutputImage();
   }
