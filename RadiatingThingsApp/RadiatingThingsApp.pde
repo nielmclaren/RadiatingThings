@@ -11,7 +11,7 @@ color[] palette;
 PImage baseImage;
 PGraphics inputImage, outputImage;
 ShortImage shortImage;
-ShortImageBlurrer blurrer;
+ShortImageBlurrer blurrer, blurrer2;
 
 int imageX;
 int imageY;
@@ -59,7 +59,7 @@ void setup() {
     .setNumberOfTickMarks(100 + 1)
     .snapToTickMarks(true)
     .showTickMarks(false)
-    .setValue(27);
+    .setValue(7);
   currY += 30;
 
   cp5.addSlider("wavelengthWeightingSlider")
@@ -69,19 +69,32 @@ void setup() {
     .setNumberOfTickMarks(20 + 1)
     .snapToTickMarks(true)
     .showTickMarks(false)
-    .setValue(0.7);
+    .setValue(0.5);
   currY += 30;
 
   cp5.addSlider("multiplierSlider")
     .setPosition(margin + paletteWidth + margin + inputTempImage.width + margin, currY)
     .setSize(240, 20)
-    .setRange(0, 20)
-    .setValue(2);
+    .setRange(0, 10)
+    .setNumberOfTickMarks(40 + 1)
+    .snapToTickMarks(true)
+    .showTickMarks(false)
+    .setValue(1);
   currY += 30;
 
   currY += 30;
 
   cp5.addSlider("blurRadiusSlider")
+    .setPosition(margin + paletteWidth + margin + inputTempImage.width + margin, currY)
+    .setSize(240, 20)
+    .setRange(0, 100)
+    .setNumberOfTickMarks(100 + 1)
+    .snapToTickMarks(true)
+    .showTickMarks(false)
+    .setValue(60);
+  currY += 30;
+
+  cp5.addSlider("blurRadiusSlider2")
     .setPosition(margin + paletteWidth + margin + inputTempImage.width + margin, currY)
     .setSize(240, 20)
     .setRange(0, 100)
@@ -103,7 +116,8 @@ void setup() {
   outputImage = createGraphics(inputImage.width, inputImage.height, P2D);
 
   shortImage = new ShortImage(inputImage.width, inputImage.height, RGB);
-  blurrer = new ShortImageBlurrer(inputImage.width, inputImage.height, 30);
+  blurrer = new ShortImageBlurrer(inputImage.width, inputImage.height, 60);
+  blurrer2 = new ShortImageBlurrer(inputImage.width, inputImage.height, 30);
 
   reset();
 }
@@ -156,6 +170,9 @@ void reset() {
 void updateOutputImage() {
   shortImage.setImage(inputImage);
   blurrer.blur(shortImage.getValuesRef(), 3);
+
+  shortImage.addImage(inputImage);
+  blurrer2.blur(shortImage.getValuesRef(), 3);
 
   inputImage.loadPixels();
 
@@ -280,6 +297,10 @@ void controlEvent(ControlEvent theEvent) {
     int blur = floor(cp5.getController("blurRadiusSlider").getValue());
     blurrer = new ShortImageBlurrer(inputImage.width, inputImage.height, blur);
     updateOutputImage();
+  } else if (theEvent.isFrom(cp5.getController("blurRadiusSlider2"))) {
+    int blur = floor(cp5.getController("blurRadiusSlider2").getValue());
+    blurrer2 = new ShortImageBlurrer(inputImage.width, inputImage.height, blur);
+    updateOutputImage();
   }
 }
 
@@ -301,7 +322,7 @@ void saveAnimation() {
   int wavelength1 = floor(cp5.getController("wavelengthSlider").getValue());
   int wavelength2 = floor(cp5.getController("wavelengthSlider2").getValue());
   int totalWavelength = getCombinedWavelength(wavelength1, wavelength2);
-  int frameCount = 10 * totalWavelength;
+  int frameCount = 30 * totalWavelength;
   for (int i = 0; i < frameCount; i++) {
     String filename = frameNamer.next();
 
