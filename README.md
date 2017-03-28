@@ -1,4 +1,4 @@
 # RadiatingThings
-Tool for generating short animations of things with fields or waves emanating from them.
+Making it look like waves of energy are coming out of objects in photos.
 
 ![render.png](https://raw.githubusercontent.com/nielmclaren/RadiatingThings/master/render.png)
