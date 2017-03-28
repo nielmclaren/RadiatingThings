@@ -1,16 +1,15 @@
 
+float targetAngle;
 FileNamer fileNamer;
 
 void setup() {
   size(800, 800);
 
+  targetAngle = 0;
   fileNamer = new FileNamer("output/export", "png");
 }
 
 void draw() {
-  //float targetAngle = atan2(mouseY - height/2, mouseX - width/2);
-  float targetAngle = PI/4;
-
   colorMode(HSB);
 
   loadPixels();
@@ -27,7 +26,7 @@ void draw() {
 
 color getPixel(float radius, float angleDelta) {
   return color(
-      floor(map(radius + mouseX * (cos(2*angleDelta) + 1)/2, 0, width * 0.4, 0, 8)) * 32,
+      floor(map(radius * map(cos(angleDelta), -1, 1, 5, 1), 0, width * 0.4, 0, 8)) * 32,
       190, 255);
 }
 
@@ -45,4 +44,16 @@ void keyReleased() {
       save(fileNamer.next());
       break;
   }
+}
+
+void mouseReleased() {
+  float dx = mouseX - width/2;
+  float dy = mouseY - height/2;
+  float d = sqrt(dx * dx + dy * dy);
+  float angleDelta = getAngleDelta(targetAngle, atan2(mouseY - height/2, mouseX - width/2));
+  println(deg(angleDelta), cos(angleDelta));
+}
+
+int deg(float radians) {
+  return floor(radians * 180/PI);
 }
