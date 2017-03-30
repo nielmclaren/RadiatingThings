@@ -11,10 +11,11 @@ color[] palette;
 PImage baseImage;
 PGraphics inputImage, outputImage;
 ShortImage shortImage;
-ShortImageBlurrer blurrer, blurrer2;
 
 int imageX;
 int imageY;
+int imageWidth;
+int imageHeight;
 
 boolean showInputImage;
 boolean showBaseImage;
@@ -26,10 +27,17 @@ void setup() {
   size(1280, 830, P2D);
   smooth();
 
+  imageWidth = 800;
+  imageHeight = 800;
+
   baseImage = loadImage("data/dronedefendersky.png");
+  assert(baseImage.width == imageWidth);
+  assert(baseImage.height == imageHeight);
 
   inputFilename = "input.png";
   PImage inputTempImage = loadImage(inputFilename);
+  assert(inputTempImage.width == imageWidth);
+  assert(inputTempImage.height == imageHeight);
 
   margin = 15;
   paletteWidth = 40;
@@ -82,28 +90,6 @@ void setup() {
     .setValue(1);
   currY += 30;
 
-  currY += 30;
-
-  cp5.addSlider("blurRadiusSlider")
-    .setPosition(margin + paletteWidth + margin + inputTempImage.width + margin, currY)
-    .setSize(240, 20)
-    .setRange(0, 100)
-    .setNumberOfTickMarks(100 + 1)
-    .snapToTickMarks(true)
-    .showTickMarks(false)
-    .setValue(60);
-  currY += 30;
-
-  cp5.addSlider("blurRadiusSlider2")
-    .setPosition(margin + paletteWidth + margin + inputTempImage.width + margin, currY)
-    .setSize(240, 20)
-    .setRange(0, 100)
-    .setNumberOfTickMarks(100 + 1)
-    .snapToTickMarks(true)
-    .showTickMarks(false)
-    .setValue(30);
-  currY += 30;
-
   regeneratePalette();
 
   showInputImage = false;
@@ -112,12 +98,10 @@ void setup() {
   animationFolderNamer = new FileNamer("output/anim", "/");
   fileNamer = new FileNamer("output/export", "png");
 
-  inputImage = createGraphics(inputTempImage.width, inputTempImage.height, P2D);
-  outputImage = createGraphics(inputImage.width, inputImage.height, P2D);
+  inputImage = createGraphics(imageWidth, imageHeight, P2D);
+  outputImage = createGraphics(imageWidth, imageHeight, P2D);
 
-  shortImage = new ShortImage(inputImage.width, inputImage.height, RGB);
-  blurrer = new ShortImageBlurrer(inputImage.width, inputImage.height, 60);
-  blurrer2 = new ShortImageBlurrer(inputImage.width, inputImage.height, 30);
+  shortImage = new ShortImage(imageWidth, imageHeight, RGB);
 
   reset();
 }
@@ -167,14 +151,14 @@ void reset() {
 }
 
 void updateOutputImage() {
-  shortImage.drawSpecialThing();
+  drawSpecialThing(shortImage.getValuesRef(), imageWidth, imageHeight);
 
   inputImage.beginDraw();
   inputImage.background(0);
   inputImage.image(shortImage.getImageRef(), 0, 0);
   inputImage.endDraw();
 
-  PGraphics translatedImage = createGraphics(inputImage.width, inputImage.height, P2D);
+  PGraphics translatedImage = createGraphics(imageWidth, imageHeight, P2D);
   translatedImage.beginDraw();
   translatedImage.loadPixels();
   for (int y = 0; y < translatedImage.height; y++) {
@@ -193,6 +177,41 @@ void updateOutputImage() {
   }
   outputImage.image(translatedImage, 0, 0);
   outputImage.endDraw();
+}
+
+void drawSpecialThing(short[] values, int w, int h) {
+  float targetAngle = -PI * 0.85;
+  float centerX = w/2 + 130;
+  float centerY = h/2 + 20;
+  for (int x = 0; x < w; x++) {
+    for (int y = 0; y < h; y++) {
+      float dx = x - centerX;
+      float dy = y - centerY;
+      float d = sqrt(dx * dx + dy * dy);
+      short v = getSpecialThingValue(d, getAngleDelta(targetAngle, atan2(y - centerY, x - centerX)));
+      int pixelIndex = y * w + x;
+      values[pixelIndex * 3 + 0] = v;
+      values[pixelIndex * 3 + 1] = v;
+      values[pixelIndex * 3 + 2] = v;
+    }
+  }
+}
+
+short getSpecialThingValue(float radius, float angleDelta) {
+  float k = 1
+    * map(cos(angleDelta), -1, 1, 7, 1)
+    * map(cos(7 * angleDelta), -1, 1, 1.3, 1)
+    * map(cos(13 * angleDelta), -1, 1, 1.2, 1);
+  return (short)(floor(constrain(map(radius * k, 0, 2 * width,
+      Short.MAX_VALUE, Short.MIN_VALUE), Short.MIN_VALUE, Short.MAX_VALUE)));
+}
+
+float getAngleDelta(float from, float to) {
+  float delta = abs(to - from);
+  if (delta > PI) {
+    return 2 * PI - delta;
+  }
+  return delta;
 }
 
 void regeneratePalette() {
@@ -291,14 +310,6 @@ void controlEvent(ControlEvent theEvent) {
       || theEvent.isFrom(cp5.getController("multiplierSlider"))) {
     regeneratePalette();
     updateOutputImage();
-  } else if (theEvent.isFrom(cp5.getController("blurRadiusSlider"))) {
-    int blur = floor(cp5.getController("blurRadiusSlider").getValue());
-    blurrer = new ShortImageBlurrer(inputImage.width, inputImage.height, blur);
-    updateOutputImage();
-  } else if (theEvent.isFrom(cp5.getController("blurRadiusSlider2"))) {
-    int blur = floor(cp5.getController("blurRadiusSlider2").getValue());
-    blurrer2 = new ShortImageBlurrer(inputImage.width, inputImage.height, blur);
-    updateOutputImage();
   }
 }
 
@@ -352,8 +363,8 @@ String getRawFilename(String filename) {
 }
 
 boolean mouseHitTestImage() {
-  return mouseX > imageX && mouseX < imageX + inputImage.width
-      && mouseY > imageY && mouseY < imageY + inputImage.height;
+  return mouseX > imageX && mouseX < imageX + imageWidth
+      && mouseY > imageY && mouseY < imageY + imageHeight;
 }
 
 color translateValue(short v) {
