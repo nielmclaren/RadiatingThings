@@ -26,7 +26,7 @@ void setup() {
   size(1280, 830, P2D);
   smooth();
 
-  baseImage = loadImage("data/quarryrock.png");
+  baseImage = loadImage("data/dronedefendersky.png");
 
   inputFilename = "input.png";
   PImage inputTempImage = loadImage(inputFilename);
@@ -59,7 +59,7 @@ void setup() {
     .setNumberOfTickMarks(100 + 1)
     .snapToTickMarks(true)
     .showTickMarks(false)
-    .setValue(7);
+    .setValue(12);
   currY += 30;
 
   cp5.addSlider("wavelengthWeightingSlider")
@@ -69,7 +69,7 @@ void setup() {
     .setNumberOfTickMarks(20 + 1)
     .snapToTickMarks(true)
     .showTickMarks(false)
-    .setValue(0.5);
+    .setValue(0.7);
   currY += 30;
 
   cp5.addSlider("multiplierSlider")
@@ -160,21 +160,19 @@ void clear() {
 }
 
 void reset() {
-  PImage inputTempImage = loadImage(inputFilename);
   inputImage.beginDraw();
-  inputImage.image(inputTempImage, 0, 0);
+  inputImage.background(0);
   inputImage.endDraw();
   updateOutputImage();
 }
 
 void updateOutputImage() {
-  shortImage.setImage(inputImage);
-  blurrer.blur(shortImage.getValuesRef(), 3);
+  shortImage.drawSpecialThing();
 
-  shortImage.addImage(inputImage);
-  blurrer2.blur(shortImage.getValuesRef(), 3);
-
-  inputImage.loadPixels();
+  inputImage.beginDraw();
+  inputImage.background(0);
+  inputImage.image(shortImage.getImageRef(), 0, 0);
+  inputImage.endDraw();
 
   PGraphics translatedImage = createGraphics(inputImage.width, inputImage.height, P2D);
   translatedImage.beginDraw();
@@ -203,14 +201,14 @@ void regeneratePalette() {
   int wavelength1 = floor(cp5.getController("wavelengthSlider").getValue());
   int wavelength2 = floor(cp5.getController("wavelengthSlider2").getValue());
   float weight = cp5.getController("wavelengthWeightingSlider").getValue();
-  int totalWavelength = getCombinedWavelength(wavelength1, wavelength2);
+  int combinedWavelength = getCombinedWavelength(wavelength1, wavelength2);
   float multiplier = cp5.getController("multiplierSlider").getValue();
   palette = new color[shortRange];
   for (int i = 0; i < shortRange; i++) {
     float k = float(i) / shortRange;
     palette[i] = color(255. * (1 - multiplier * k * (
-          weight * (cos((k * wavelength1 + offset * totalWavelength) * 2 * PI) / 2 + 0.5)
-          + (1 - weight) * (cos((k * wavelength2 + offset * totalWavelength) * 2 * PI) / 2 + 0.5)
+          weight * (cos((k * wavelength1 + offset * combinedWavelength) * 2 * PI) / 2 + 0.5)
+          + (1 - weight) * (cos((k * wavelength2 + offset * combinedWavelength) * 2 * PI) / 2 + 0.5)
         )));
   }
 }
@@ -322,8 +320,8 @@ void saveAnimation() {
   int wavelength1 = floor(cp5.getController("wavelengthSlider").getValue());
   int wavelength2 = floor(cp5.getController("wavelengthSlider2").getValue());
   int totalWavelength = getCombinedWavelength(wavelength1, wavelength2);
-  int frameCount = 30 * totalWavelength;
-  for (int i = 0; i < frameCount; i++) {
+  int numFrames = 30 * totalWavelength;
+  for (int i = 0; i < numFrames; i++) {
     String filename = frameNamer.next();
 
     cp5.getController("paletteOffsetSlider").setValue(float(i) / frameCount);

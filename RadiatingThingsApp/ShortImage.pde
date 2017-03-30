@@ -20,6 +20,41 @@ class ShortImage {
     _isImageDirty = true;
   }
 
+  void drawSpecialThing() {
+    float targetAngle = -PI * 0.85;
+    float centerX = _width/2 + 130;
+    float centerY = _height/2 + 20;
+    for (int x = 0; x < _width; x++) {
+      for (int y = 0; y < _height; y++) {
+        float dx = x - centerX;
+        float dy = y - centerY;
+        float d = sqrt(dx * dx + dy * dy);
+        short v = getValue(d, getAngleDelta(targetAngle, atan2(y - centerY, x - centerX)));
+        int pixelIndex = y * _width + x;
+        _values[pixelIndex * 3 + 0] = v;
+        _values[pixelIndex * 3 + 1] = v;
+        _values[pixelIndex * 3 + 2] = v;
+      }
+    }
+  }
+
+  private short getValue(float radius, float angleDelta) {
+    float k = 1
+      * map(cos(angleDelta), -1, 1, 7, 1)
+      * map(cos(7 * angleDelta), -1, 1, 1.3, 1)
+      * map(cos(13 * angleDelta), -1, 1, 1.2, 1);
+    return (short)(floor(constrain(map(radius * k, 0, 2 * width,
+        Short.MAX_VALUE, Short.MIN_VALUE), Short.MIN_VALUE, Short.MAX_VALUE)));
+  }
+
+  private float getAngleDelta(float from, float to) {
+    float delta = abs(to - from);
+    if (delta > PI) {
+      return 2 * PI - delta;
+    }
+    return delta;
+  }
+
   short[] getValuesRef() {
     return _values;
   }
