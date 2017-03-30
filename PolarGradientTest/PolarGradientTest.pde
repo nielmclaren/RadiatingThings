@@ -5,7 +5,7 @@ FileNamer fileNamer;
 void setup() {
   size(800, 800);
 
-  targetAngle = 0;
+  targetAngle = -PI/4;
   fileNamer = new FileNamer("output/export", "png");
 }
 
@@ -25,9 +25,11 @@ void draw() {
 }
 
 color getPixel(float radius, float angleDelta) {
-  return color(
-      floor(map(radius * map(cos(angleDelta), -1, 1, 5, 1), 0, width * 0.4, 0, 8)) * 32,
-      190, 255);
+  float k = 1
+    * map(cos(angleDelta), -1, 1, 7, 1)
+    * map(cos(7 * angleDelta), -1, 1, 1.3, 1)
+    * map(cos(13 * angleDelta), -1, 1, 1.2, 1);
+  return color(map(radius * k, 0, 2 * width, 0, 255));
 }
 
 float getAngleDelta(float from, float to) {
