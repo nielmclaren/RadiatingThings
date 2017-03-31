@@ -30,7 +30,7 @@ void setup() {
   imageWidth = 800;
   imageHeight = 800;
 
-  baseImage = loadImage("data/dronedefendersky.png");
+  baseImage = loadImage("data/dronedefendermirror.png");
   assert(baseImage.width == imageWidth);
   assert(baseImage.height == imageHeight);
 
@@ -151,7 +151,9 @@ void reset() {
 }
 
 void updateOutputImage() {
-  drawSpecialThing(shortImage.getValuesRef(), imageWidth, imageHeight);
+  shortImage.clear();
+  drawSpecialThing(shortImage.getValuesRef(), imageWidth, imageHeight, 180, 410, -0.15 * PI);
+  drawSpecialThing(shortImage.getValuesRef(), imageWidth, imageHeight, 620, 410, -0.85 * PI);
 
   inputImage.beginDraw();
   inputImage.background(0);
@@ -179,20 +181,21 @@ void updateOutputImage() {
   outputImage.endDraw();
 }
 
-void drawSpecialThing(short[] values, int w, int h) {
-  float targetAngle = -PI * 0.85;
-  float centerX = w/2 + 130;
-  float centerY = h/2 + 20;
+void drawSpecialThing(short[] values, int w, int h, int centerX, int centerY, float angle) {
   for (int x = 0; x < w; x++) {
     for (int y = 0; y < h; y++) {
+      int pixelIndex = y * w + x;
+      short currValue = values[pixelIndex * 3 + 0];
+
       float dx = x - centerX;
       float dy = y - centerY;
       float d = sqrt(dx * dx + dy * dy);
-      short v = getSpecialThingValue(d, getAngleDelta(targetAngle, atan2(y - centerY, x - centerX)));
-      int pixelIndex = y * w + x;
-      values[pixelIndex * 3 + 0] = v;
-      values[pixelIndex * 3 + 1] = v;
-      values[pixelIndex * 3 + 2] = v;
+      short value = getSpecialThingValue(d, getAngleDelta(angle, atan2(y - centerY, x - centerX)));
+
+      short newValue = (short)constrain(currValue + value, Short.MIN_VALUE, Short.MAX_VALUE);
+      values[pixelIndex * 3 + 0] = newValue;
+      values[pixelIndex * 3 + 1] = newValue;
+      values[pixelIndex * 3 + 2] = newValue;
     }
   }
 }

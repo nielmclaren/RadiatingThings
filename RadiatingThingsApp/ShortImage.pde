@@ -24,6 +24,12 @@ class ShortImage {
     return _values;
   }
 
+  void clear() {
+    for (int i = 0; i < _width * _height * _numChannels; i++) {
+      _values[i] = Short.MIN_VALUE;
+    }
+  }
+
   short getRedValue(int x, int y) {
     int pixelIndex = y * _width + x;
     return _values[pixelIndex * _numChannels + 0];
