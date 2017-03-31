@@ -24,6 +24,10 @@ class ShortImage {
     return _values;
   }
 
+  void loadValues() {
+    _isImageDirty = true;
+  }
+
   void clear() {
     for (int i = 0; i < _width * _height * _numChannels; i++) {
       _values[i] = Short.MIN_VALUE;

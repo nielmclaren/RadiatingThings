@@ -1,5 +1,7 @@
 import controlP5.*;
 
+int shortRange = Short.MAX_VALUE - Short.MIN_VALUE;
+
 String inputFilename;
 
 ControlP5 cp5;
@@ -7,7 +9,7 @@ ControlP5 cp5;
 int margin;
 int paletteWidth;
 
-color[] palette;
+short[] palette;
 PImage baseImage;
 PGraphics inputImage, outputImage;
 ShortImage shortImage;
@@ -57,7 +59,7 @@ void setup() {
     .setNumberOfTickMarks(100 + 1)
     .snapToTickMarks(true)
     .showTickMarks(false)
-    .setValue(3);
+    .setValue(8);
   currY += 30;
 
   cp5.addSlider("wavelengthSlider2")
@@ -67,7 +69,7 @@ void setup() {
     .setNumberOfTickMarks(100 + 1)
     .snapToTickMarks(true)
     .showTickMarks(false)
-    .setValue(12);
+    .setValue(24);
   currY += 30;
 
   cp5.addSlider("wavelengthWeightingSlider")
@@ -83,11 +85,11 @@ void setup() {
   cp5.addSlider("multiplierSlider")
     .setPosition(margin + paletteWidth + margin + inputTempImage.width + margin, currY)
     .setSize(240, 20)
-    .setRange(0, 10)
-    .setNumberOfTickMarks(40 + 1)
+    .setRange(0, 5)
+    .setNumberOfTickMarks(50 + 1)
     .snapToTickMarks(true)
     .showTickMarks(false)
-    .setValue(1);
+    .setValue(0.4);
   currY += 30;
 
   regeneratePalette();
@@ -129,10 +131,8 @@ void drawPalette(int paletteX, int paletteY, int paletteWidth, int paletteHeight
 
   for (int y = 0; y < paletteHeight; y++) {
     int i = floor(y * palette.length / paletteHeight);
-    fill(palette[i]);
-    rect(
-      paletteX, paletteY,
-      paletteWidth, paletteHeight * (1 - (float) i / palette.length));
+    stroke(color(constrain(palette[i] * 255 / shortRange, 0, 255)));
+    line(paletteX, paletteY + paletteHeight - y, paletteX + paletteWidth, paletteY + paletteHeight - y);
   }
 }
 
@@ -152,24 +152,14 @@ void reset() {
 
 void updateOutputImage() {
   shortImage.clear();
-  drawSpecialThing(shortImage.getValuesRef(), imageWidth, imageHeight, 180, 410, -0.15 * PI);
-  drawSpecialThing(shortImage.getValuesRef(), imageWidth, imageHeight, 620, 410, -0.85 * PI);
+  drawSpecialThing(shortImage.getValuesRef(), imageWidth, imageHeight, 180, 410, -0.15 * PI, 0);
+  drawSpecialThing(shortImage.getValuesRef(), imageWidth, imageHeight, 620, 410, -0.85 * PI, 50);
+  shortImage.loadValues();
 
   inputImage.beginDraw();
   inputImage.background(0);
   inputImage.image(shortImage.getImageRef(), 0, 0);
   inputImage.endDraw();
-
-  PGraphics translatedImage = createGraphics(imageWidth, imageHeight, P2D);
-  translatedImage.beginDraw();
-  translatedImage.loadPixels();
-  for (int y = 0; y < translatedImage.height; y++) {
-    for (int x = 0; x < translatedImage.width; x++) {
-      translatedImage.pixels[y * translatedImage.width + x] = translateValue(shortImage.getRedValue(x, y));
-    }
-  }
-  translatedImage.updatePixels();
-  translatedImage.endDraw();
 
   outputImage.beginDraw();
   outputImage.blendMode(BLEND);
@@ -177,11 +167,11 @@ void updateOutputImage() {
     outputImage.image(baseImage, 0, 0);
     outputImage.blendMode(MULTIPLY);
   }
-  outputImage.image(translatedImage, 0, 0);
+  outputImage.image(shortImage.getImageRef(), 0, 0);
   outputImage.endDraw();
 }
 
-void drawSpecialThing(short[] values, int w, int h, int centerX, int centerY, float angle) {
+void drawSpecialThing(short[] values, int w, int h, int centerX, int centerY, float angle, float offset) {
   for (int x = 0; x < w; x++) {
     for (int y = 0; y < h; y++) {
       int pixelIndex = y * w + x;
@@ -190,9 +180,9 @@ void drawSpecialThing(short[] values, int w, int h, int centerX, int centerY, fl
       float dx = x - centerX;
       float dy = y - centerY;
       float d = sqrt(dx * dx + dy * dy);
-      short value = getSpecialThingValue(d, getAngleDelta(angle, atan2(y - centerY, x - centerX)));
+      short value = getSpecialThingValue(d, getAngleDelta(angle, atan2(y - centerY, x - centerX)), offset);
 
-      short newValue = (short)constrain(currValue + value, Short.MIN_VALUE, Short.MAX_VALUE);
+      short newValue = (short)constrain(currValue + translateValue(value), Short.MIN_VALUE, Short.MAX_VALUE);
       values[pixelIndex * 3 + 0] = newValue;
       values[pixelIndex * 3 + 1] = newValue;
       values[pixelIndex * 3 + 2] = newValue;
@@ -200,13 +190,23 @@ void drawSpecialThing(short[] values, int w, int h, int centerX, int centerY, fl
   }
 }
 
-short getSpecialThingValue(float radius, float angleDelta) {
+short getSpecialThingValue(float radius, float angleDelta, float offset) {
   float k = 1
-    * map(cos(angleDelta), -1, 1, 7, 1)
-    * map(cos(7 * angleDelta), -1, 1, 1.3, 1)
-    * map(cos(13 * angleDelta), -1, 1, 1.2, 1);
-  return (short)(floor(constrain(map(radius * k, 0, 2 * width,
+    * map(cos(angleDelta), -1, 1, 11, 1)
+    * map(cos(5 * angleDelta), -1, 1, 1.1, 1)
+    * map(cos(9 * angleDelta), -1, 1, 1.05, 1);
+  return (short)(floor(constrain(map(radius * k + offset, 0, 2 * width,
       Short.MAX_VALUE, Short.MIN_VALUE), Short.MIN_VALUE, Short.MAX_VALUE)));
+}
+
+short translateValue(short v) {
+  int len = palette.length;
+  float value = map(v, Short.MIN_VALUE, Short.MAX_VALUE, 0, len);
+  int index = floor(value % len);
+  if (index >= len) {
+    index--;
+  }
+  return palette[index];
 }
 
 float getAngleDelta(float from, float to) {
@@ -218,17 +218,16 @@ float getAngleDelta(float from, float to) {
 }
 
 void regeneratePalette() {
-  int shortRange = Short.MAX_VALUE - Short.MIN_VALUE;
   float offset = cp5.getController("paletteOffsetSlider").getValue();
   int wavelength1 = floor(cp5.getController("wavelengthSlider").getValue());
   int wavelength2 = floor(cp5.getController("wavelengthSlider2").getValue());
   float weight = cp5.getController("wavelengthWeightingSlider").getValue();
   int combinedWavelength = getCombinedWavelength(wavelength1, wavelength2);
   float multiplier = cp5.getController("multiplierSlider").getValue();
-  palette = new color[shortRange];
+  palette = new short[shortRange];
   for (int i = 0; i < shortRange; i++) {
     float k = float(i) / shortRange;
-    palette[i] = color(255. * (1 - multiplier * k * (
+    palette[i] = (short)floor(Short.MIN_VALUE + shortRange * (1 - multiplier * k * (
           weight * (cos((k * wavelength1 + offset * combinedWavelength) * 2 * PI) / 2 + 0.5)
           + (1 - weight) * (cos((k * wavelength2 + offset * combinedWavelength) * 2 * PI) / 2 + 0.5)
         )));
@@ -369,14 +368,3 @@ boolean mouseHitTestImage() {
   return mouseX > imageX && mouseX < imageX + imageWidth
       && mouseY > imageY && mouseY < imageY + imageHeight;
 }
-
-color translateValue(short v) {
-  int len = palette.length;
-  float value = map(v, Short.MIN_VALUE, Short.MAX_VALUE, 0, len);
-  int index = floor(value % len);
-  if (index >= len) {
-    index--;
-  }
-  return palette[index];
-}
-
